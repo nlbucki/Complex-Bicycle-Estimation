@@ -21,26 +21,41 @@ function [x,y,theta,internalStateOut] = estRun(time, dt, internalStateIn, steeri
 % Example code only, you'll want to heavily modify this.
 % this needs to correspond to your init function:
 
-x = internalStateIn.x;
-y = internalStateIn.y;
-theta = internalStateIn.theta;
-color = internalStateIn.color;
+xm = internalStateIn.xm;
+Pm = internalStateIn.Pm;
 
-x = x + pedalSpeed;
-y = y + pedalSpeed;
+theta = xm(3);
+omega = pedalSpeed;
+gamma = steeringAngle;
+
+B = 0.8;
+r = 0.425;
+R = [1.0535    1.4778;
+    1.4778    2.8723];
+Q = zeros(3,3);
+L = eye(3);
+M = eye(2);
+
+H = [1 0 -0.5*B*sin(theta);
+     0 1 0.5*B*cos(theta)];
+A = [1 0 -5*r*omega*sin(theta);
+     0 1 5*r*omega*cos(theta);
+     0 0 1];
+
+xp = [5*r*omega*cos(theta);
+      5*r*omega*sin(theta);
+      5*r*omega/B*tan(gamma)]*dt + xm;
+Pp = A*Pm*A';
 
 if ~isnan(measurement(1)) & ~isnan(measurement(2))
     % have a valid measurement
-    x = measurement(1);
-    y = measurement(2);
-    theta = theta + 1;
-end
-
-% we're unreliable about our favourite colour: 
-if strcmp(color, 'green')
-    color = 'red';
+    K = Pp*H'*inv(H*Pp*H' + M*R*M');
+    h = xp(1:2) + [0.5*B*cos(xp(3)); 0.5*B*sin(xp(3))];
+    xm = xp + K*(measurement - h);
+    Pm = (eye(3) - K*H)*Pp;
 else
-    color = 'green';
+    Pm = Pp;
+    xm = xp;
 end
 
 %% OUTPUTS %%
@@ -48,9 +63,10 @@ end
 % at next run), must obviously be compatible with the format of
 % internalStateIn:
 
-internalStateOut.x = x;
-internalStateOut.y = y;
-internalStateOut.theta = theta;
-internalStateOut.color = color;
+internalStateOut.xm = xm;
+internalStateOut.Pm = Pm;
+x = xm(1);
+y = xm(2);
+theta = xm(3);
 
 end

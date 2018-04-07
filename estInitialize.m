@@ -11,10 +11,11 @@ function internalState = estInitialize
 % note that there is *absolutely no prescribed format* for this internal state.
 % You can put in it whatever you like. Probably, you'll want to keep the position
 % and angle, and probably you'll remove the color.
-internalState.x = 0;
-internalState.y = 0;
-internalState.theta = 0;
-internalState.color = 'green'; 
+internalState.xm = [0; 0; pi/4];
+P0 = [1 0 0;
+      0 1 0;
+      0 0 pi/4];
+internalState.Pm = P0;
 
 end
 
