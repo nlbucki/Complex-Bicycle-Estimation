@@ -12,8 +12,8 @@ function internalState = estInitialize
 % You can put in it whatever you like. Probably, you'll want to keep the position
 % and angle, and probably you'll remove the color.
 internalState.xm = [0; 0; pi/4];
-P0 = [1 0 0;
-      0 1 0;
+P0 = [10 0 0;
+      0 10 0;
       0 0 pi/4];
 internalState.Pm = P0;
 

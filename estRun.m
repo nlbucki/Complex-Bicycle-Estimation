@@ -30,9 +30,11 @@ gamma = steeringAngle;
 
 B = 0.8;
 r = 0.425;
-R = [1.0535    1.4778;
-    1.4778    2.8723];
-Q = zeros(3,3);
+R = [1.0881, 1.5315;
+    1.5315, 2.9845];
+Q = [0.01 0 0;
+     0 0.01 0;
+     0 0 0.1];
 L = eye(3);
 M = eye(2);
 
@@ -45,7 +47,7 @@ A = [1 0 -5*r*omega*sin(theta);
 xp = [5*r*omega*cos(theta);
       5*r*omega*sin(theta);
       5*r*omega/B*tan(gamma)]*dt + xm;
-Pp = A*Pm*A';
+Pp = A*Pm*A' + L*Q*L';
 
 if ~isnan(measurement(1)) & ~isnan(measurement(2))
     % have a valid measurement
