@@ -53,7 +53,7 @@ if ~isnan(measurement(1)) & ~isnan(measurement(2))
     % have a valid measurement
     K = Pp*H'*inv(H*Pp*H' + M*R*M');
     h = xp(1:2) + [0.5*B*cos(xp(3)); 0.5*B*sin(xp(3))];
-    xm = xp + K*(measurement - h);
+    xm = xp + K*(measurement' - h);
     Pm = (eye(3) - K*H)*Pp;
 else
     Pm = Pp;
