@@ -35,28 +35,48 @@ R = [1.0881, 1.5315;
 Q = [0.1 0 0;
      0 0.1 0;
      0 0 0.1];
-% Q = zeros(3,3);
-L = eye(3);
-M = eye(2);
 
-H = [1 0 -0.5*B*sin(theta);
-     0 1 0.5*B*cos(theta)];
-A = [1 0 -5*r*omega*sin(theta);
-     0 1 5*r*omega*cos(theta);
-     0 0 1];
+sigmas = zeros(3,6);
+decomp = chol(3*Pm, 'lower');
+for i = 1:3
+    sigmas(:,i) = xm + decomp(:,i);
+    sigmas(:,i+3) = xm - decomp(:,i);
+end
 
-xp3 = xm(3) + 5*r*omega/B*tan(gamma)*dt;
-xp = [xm(1) + B*(sin(xp3)-sin(theta))/tan(gamma);
-      xm(2) - B*(cos(xp3)-cos(theta))/tan(gamma);
-      xp3];
-Pp = A*Pm*A' + L*Q*L';
+for i = 1:6
+    s3 = sigmas(3,i) + 5*r*omega/B*tan(gamma)*dt;
+    sigmas(:,i) = [sigmas(1,i) + B*(sin(s3)-sin(theta))/tan(gamma);
+                  sigmas(2,i) - B*(cos(s3)-cos(theta))/tan(gamma);
+                  s3];
+end
+
+xp = mean(sigmas, 2);
+Pp = zeros(3);
+for i = 1:6
+    Pp = Pp + 1/6*(sigmas(:,i) - xp)*(sigmas(:,i) - xp)';
+end
+Pp = Pp + Q;
 
 if ~isnan(measurement(1)) & ~isnan(measurement(2))
     % have a valid measurement
-    K = Pp*H'*inv(H*Pp*H' + M*R*M');
-    h = xp(1:2) + [0.5*B*cos(xp(3)); 0.5*B*sin(xp(3))];
-    xm = xp + K*(measurement' - h);
-    Pm = (eye(3) - K*H)*Pp;
+    meas_sigmas = zeros(2,6);
+    for i = 1:6
+        meas_sigmas(1,i) = sigmas(1,i) + 0.5*B*cos(sigmas(3,i));
+        meas_sigmas(2,i) = sigmas(2,i) + 0.5*B*cos(sigmas(3,i));
+    end
+    z_hat = mean(meas_sigmas, 2);
+    Pzz = zeros(2);
+    for i = 1:6
+        Pzz = Pzz + 1/6*(meas_sigmas(:,i) - z_hat)*(meas_sigmas(:,i) - z_hat)';
+    end
+    Pzz = Pzz + R;
+    Pxz = zeros(3,2);
+    for i = 1:6
+        Pxz = Pxz + 1/6*(sigmas(:,i) - xp)*(meas_sigmas(:,i) - z_hat)';
+    end
+    K = Pxz*inv(Pzz);
+    xm = xp + K*(measurement' - z_hat);
+    Pm = Pp - K*Pzz*K';
 else
     Pm = Pp;
     xm = xp;
