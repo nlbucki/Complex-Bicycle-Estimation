@@ -34,7 +34,7 @@ R = [1.0881, 1.5315;
     1.5315, 2.9845];
 Q = [0.1 0 0;
      0 0.1 0;
-     0 0 0.1];
+     0 0 0];
 
 sigmas = zeros(3,6);
 decomp = chol(3*Pm, 'lower');
@@ -45,6 +45,7 @@ end
 
 for i = 1:6
     s3 = sigmas(3,i) + 5*r*omega/B*tan(gamma)*dt;
+%     s3 = xm(3) + 5*r*omega/B*tan(gamma)*dt;
     sigmas(:,i) = [sigmas(1,i) + B*(sin(s3)-sin(theta))/tan(gamma);
                   sigmas(2,i) - B*(cos(s3)-cos(theta))/tan(gamma);
                   s3];
