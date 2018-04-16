@@ -10,7 +10,7 @@
 %%
 % Provide the index of the experimental run you would like to use. Note
 % that using "0" means that you will load the measurement calibration data.
-
+close all;
 experimentalRun = 1;
 fprintf(['Loading the data file #' num2str(experimentalRun) ' \n']);
 filename = ['data/run_' num2str(experimentalRun,'%03d') '.csv'];
@@ -63,6 +63,10 @@ fprintf('Final error: \n');
 fprintf(['   pos x = ' num2str(posErr_x(end)) ' m \n']);
 fprintf(['   pos y = ' num2str(posErr_y(end)) ' m \n']);
 fprintf(['   angle = ' num2str(angErr(end)) ' rad \n']);
+
+score = norm([posErr_x(end); posErr_y(end); angErr(end)], 1);
+% our scalar score
+fprintf(['Score: ' num2str(score) ' \n'])
 
 
 ax = sum(abs(posErr_x))/numDataPoints;

@@ -32,9 +32,10 @@ B = 0.8;
 r = 0.425;
 R = [1.0881, 1.5315;
     1.5315, 2.9845];
-Q = [0.01 0 0;
-     0 0.01 0;
+Q = [0.1 0 0;
+     0 0.1 0;
      0 0 0.1];
+% Q = zeros(3,3);
 L = eye(3);
 M = eye(2);
 
@@ -44,9 +45,10 @@ A = [1 0 -5*r*omega*sin(theta);
      0 1 5*r*omega*cos(theta);
      0 0 1];
 
-xp = [5*r*omega*cos(theta);
-      5*r*omega*sin(theta);
-      5*r*omega/B*tan(gamma)]*dt + xm;
+xp3 = xm(3) + 5*r*omega/B*tan(gamma)*dt;
+xp = [xm(1) + B*(sin(xp3)-sin(theta))/tan(gamma);
+      xm(2) - B*(cos(xp3)-cos(theta))/tan(gamma);
+      xp3];
 Pp = A*Pm*A' + L*Q*L';
 
 if ~isnan(measurement(1)) & ~isnan(measurement(2))
