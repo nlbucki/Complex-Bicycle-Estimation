@@ -32,48 +32,51 @@ B = 0.8;
 r = 0.425;
 R = [1.0881, 1.5315;
     1.5315, 2.9845];
-Q = [0.1 0 0;
-     0 0.1 0;
-     0 0 0];
+Q = [0.5 0;
+     0 0.1];
 
-sigmas = zeros(3,6);
-decomp = chol(3*Pm, 'lower');
-for i = 1:3
-    sigmas(:,i) = xm + decomp(:,i);
-    sigmas(:,i+3) = xm - decomp(:,i);
+Pxi = blkdiag(Pm, Q, R);
+xim = [xm; zeros(4,1)];
+ 
+sigmas = zeros(7,14);
+decomp = chol(7*Pxi, 'lower');
+for i = 1:7
+    sigmas(:,i) = xim + decomp(:,i);
+    sigmas(:,i+7) = xim - decomp(:,i);
 end
 
-for i = 1:6
-    s3 = sigmas(3,i) + 5*r*omega/B*tan(gamma)*dt;
-%     s3 = xm(3) + 5*r*omega/B*tan(gamma)*dt;
-    sigmas(:,i) = [sigmas(1,i) + B*(sin(s3)-sin(theta))/tan(gamma);
-                  sigmas(2,i) - B*(cos(s3)-cos(theta))/tan(gamma);
+sigma_xp = zeros(3,14);
+for i = 1:14
+    s3 = sigmas(3,i) + (5*r*omega + sigmas(4,i))/B*tan(gamma + sigmas(5,i))*dt;
+    sigma_xp(:,i) = [sigmas(1,i) + B*(sin(s3)-sin(theta))/tan(gamma + sigmas(5,i));
+                  sigmas(2,i) - B*(cos(s3)-cos(theta))/tan(gamma + sigmas(5,i));
                   s3];
+%     sigma_xp(:,i) = [sigmas(1,i) + 5*r*omega*cos(theta)*dt;
+%                      sigmas(2,i) + 5*r*omega*sin(theta)*dt;
+%                      sigmas(3,i) + (5*r*omega + sigmas(4,i))/B*tan(gamma + sigmas(5,i))*dt];
 end
 
-xp = mean(sigmas, 2);
+xp = mean(sigma_xp, 2);
 Pp = zeros(3);
-for i = 1:6
-    Pp = Pp + 1/6*(sigmas(:,i) - xp)*(sigmas(:,i) - xp)';
+for i = 1:14
+    Pp = Pp + 1/14*(sigma_xp(:,i) - xp)*(sigma_xp(:,i) - xp)';
 end
-Pp = Pp + Q;
 
 if ~isnan(measurement(1)) & ~isnan(measurement(2))
     % have a valid measurement
-    meas_sigmas = zeros(2,6);
-    for i = 1:6
-        meas_sigmas(1,i) = sigmas(1,i) + 0.5*B*cos(sigmas(3,i));
-        meas_sigmas(2,i) = sigmas(2,i) + 0.5*B*cos(sigmas(3,i));
+    meas_sigmas = zeros(2,14);
+    for i = 1:14
+        meas_sigmas(1,i) = sigma_xp(1,i) + 0.5*B*cos(sigma_xp(3,i)) + sigmas(6,i);
+        meas_sigmas(2,i) = sigma_xp(2,i) + 0.5*B*cos(sigma_xp(3,i)) + sigmas(7,i);
     end
     z_hat = mean(meas_sigmas, 2);
     Pzz = zeros(2);
-    for i = 1:6
-        Pzz = Pzz + 1/6*(meas_sigmas(:,i) - z_hat)*(meas_sigmas(:,i) - z_hat)';
+    for i = 1:14
+        Pzz = Pzz + 1/14*(meas_sigmas(:,i) - z_hat)*(meas_sigmas(:,i) - z_hat)';
     end
-    Pzz = Pzz + R;
     Pxz = zeros(3,2);
-    for i = 1:6
-        Pxz = Pxz + 1/6*(sigmas(:,i) - xp)*(meas_sigmas(:,i) - z_hat)';
+    for i = 1:14
+        Pxz = Pxz + 1/14*(sigma_xp(:,i) - xp)*(meas_sigmas(:,i) - z_hat)';
     end
     K = Pxz*inv(Pzz);
     xm = xp + K*(measurement' - z_hat);
