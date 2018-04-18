@@ -28,35 +28,42 @@ theta = xm(3);
 omega = pedalSpeed;
 gamma = steeringAngle;
 
-B = 0.8;
-r = 0.425;
+r = xm(4);
+B = xm(5);
 R = [1.0881, 1.5315;
     1.5315, 2.9845];
-Q = [0.1 0 0;
-     0 0.1 0;
-     0 0 0.1];
+Q = [0.1 0 0 0 0;
+     0 0.1 0 0 0;
+     0 0 0.1 0 0;
+     0 0 0 0 0;
+     0 0 0 0 0;];
 % Q = zeros(3,3);
-L = eye(3);
-M = eye(2);
 
-H = [1 0 -0.5*B*sin(theta);
-     0 1 0.5*B*cos(theta)];
-A = [1 0 -5*r*omega*sin(theta);
-     0 1 5*r*omega*cos(theta);
-     0 0 1];
+L = eye(5);
+A = [1 0 -5*r*omega*sin(theta) 5*omega*cos(theta) 0;
+     0 1 5*r*omega*cos(theta) 5*omega*sin(theta) 0;
+     0 0 1 5*omega*tan(gamma)/B -5*r*omega*tan(gamma)/(B^2)
+     0 0 0 1 0;
+     0 0 0 0 1];
 
 xp3 = xm(3) + 5*r*omega/B*tan(gamma)*dt;
 xp = [xm(1) + B*(sin(xp3)-sin(theta))/tan(gamma);
       xm(2) - B*(cos(xp3)-cos(theta))/tan(gamma);
-      xp3];
+      xp3; r; B];
+% xp = [xm(1) + 5*r*omega*cos(theta)*dt;
+%       xm(2) + 5*r*omega*sin(theta)*dt;
+%       xm(3) + 5*r*omega*tan(gamma)*dt/B; r; B];
 Pp = A*Pm*A' + L*Q*L';
 
 if ~isnan(measurement(1)) & ~isnan(measurement(2))
     % have a valid measurement
-    K = Pp*H'*inv(H*Pp*H' + M*R*M');
-    h = xp(1:2) + [0.5*B*cos(xp(3)); 0.5*B*sin(xp(3))];
+    H = [1 0 -0.5*xp(5)*sin(theta) 0 0.5*cos(theta);
+         0 1 0.5*xp(5)*cos(theta) 0 0.5*sin(theta)];
+    M = eye(2);
+    K = Pp*H'/(H*Pp*H' + M*R*M');
+    h = xp(1:2) + [0.5*xp(5)*cos(xp(3)); 0.5*xp(5)*sin(xp(3))];
     xm = xp + K*(measurement' - h);
-    Pm = (eye(3) - K*H)*Pp;
+    Pm = (eye(5) - K*H)*Pp;
 else
     Pm = Pp;
     xm = xp;
