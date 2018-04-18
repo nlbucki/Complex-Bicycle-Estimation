@@ -21,6 +21,7 @@ function [x,y,theta,internalStateOut] = estRun(~, dt, internalStateIn, steeringA
 % Example code only, you'll want to heavily modify this.
 % this needs to correspond to your init function:
 
+internalStateOut = internalStateIn;
 xm = internalStateIn.xm;
 Pm = internalStateIn.Pm;
 theta = xm(3);

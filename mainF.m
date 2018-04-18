@@ -1,4 +1,4 @@
-function error = mainF(n, state)
+function score = mainF(n, state)
 
 experimentalRun = n;
 fprintf(['Loading the data file #' num2str(experimentalRun) ' \n']);
@@ -6,10 +6,11 @@ filename = ['data/run_' num2str(experimentalRun,'%03d') '.csv'];
 experimentalData = csvread(filename);
 
 internalState = estInitialize();
-internalState.Q = [state(1) state(2); state(2) state(3)];
-internalState.kappa = state(4);
-internalState.alpha = state(5);
-internalState.beta = state(6);
+% internalState.Q = [state(1) state(2); state(2) state(3)];
+internalState.Q = [0.1 0; 0 0.1];
+internalState.kappa = state(1);
+internalState.alpha = state(2);
+internalState.beta = state(3)
 
 numDataPoints = size(experimentalData,1);
 estimatedPosition_x = zeros(numDataPoints,1);
