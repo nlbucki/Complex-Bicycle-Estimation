@@ -11,7 +11,8 @@
 % Provide the index of the experimental run you would like to use. Note
 % that using "0" means that you will load the measurement calibration data.
 close all;
-experimentalRun = 2;
+tic;
+experimentalRun = 1;
 fprintf(['Loading the data file #' num2str(experimentalRun) ' \n']);
 filename = ['data/run_' num2str(experimentalRun,'%03d') '.csv'];
 experimentalData = csvread(filename);
@@ -32,9 +33,12 @@ numDataPoints = size(experimentalData,1);
 estimatedPosition_x = zeros(numDataPoints,1);
 estimatedPosition_y = zeros(numDataPoints,1);
 estimatedAngle = zeros(numDataPoints,1);
+estimatedB = zeros(numDataPoints,1);
+estimatedr = zeros(numDataPoints,1);
 
 fprintf('Running the system \n');
 dt = experimentalData(2,1) - experimentalData(1,1);
+options = odeset('RelTol',1e-3,'AbsTol',1e-3);
 for k = 1:numDataPoints
     t = experimentalData(k,1);
     gamma = experimentalData(k,2);
@@ -49,6 +53,8 @@ for k = 1:numDataPoints
     estimatedPosition_x(k) = x;
     estimatedPosition_y(k) = y;
     estimatedAngle(k) = theta;
+    estimatedB(k) = internalState.xm(5);
+    estimatedr(k) = internalState.xm(4);
 end    
 
 fprintf('Done running \n');
@@ -67,7 +73,7 @@ fprintf(['   angle = ' num2str(angErr(end)) ' rad \n']);
 score = norm([posErr_x(end); posErr_y(end); angErr(end)], 1);
 % our scalar score
 fprintf(['Score: ' num2str(score) ' \n'])
-
+toc
 
 ax = sum(abs(posErr_x))/numDataPoints;
 ay = sum(abs(posErr_y))/numDataPoints;
@@ -134,6 +140,10 @@ subplot(5,1,5);
 plot(experimentalData(:,1), experimentalData(:,3), 'g-');
 ylabel('Pedal speed omega [rad/s]');
 xlabel('Time [s]');
+% subplot(6,1,6);
+% plot(experimentalData(:,1), estimatedr, 'g-');
+% ylabel('R');
+% xlabel('Time [s]');
 
 %%
 fprintf('Done \n');
