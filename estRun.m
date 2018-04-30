@@ -1,4 +1,4 @@
-function [x,y,theta,internalStateOut] = estRun(time, dt, internalStateIn, steeringAngle, pedalSpeed, measurement)
+function [x,y,theta,internalStateOut] = estRun(~, dt, internalStateIn, steeringAngle, pedalSpeed, measurement)
 % In this function you implement your estimator. The function arguments
 % are:
 %  time: current time in [s]
@@ -21,36 +21,56 @@ function [x,y,theta,internalStateOut] = estRun(time, dt, internalStateIn, steeri
 % Example code only, you'll want to heavily modify this.
 % this needs to correspond to your init function:
 
-x = internalStateIn.x;
-y = internalStateIn.y;
-theta = internalStateIn.theta;
-color = internalStateIn.color;
+internalStateOut = internalStateIn;
+particles = internalStateIn.particles;
+omega = pedalSpeed;
+gamma = steeringAngle;
+R = [1.0881, 1.5315;
+     1.5315, 2.9845];
 
-x = x + pedalSpeed;
-y = y + pedalSpeed;
+p_particles = zeros(size(particles));
+for i=1:size(particles,2)
+    v1 = normrnd(0,0.1);
+    v2 = normrnd(0,0.1);
+    p_particles(:,i) = particles(:,i) + ...
+                     [5*particles(4,i)*(omega+v1)*cos(particles(3,i));
+                     5*particles(4,i)*(omega+v1)*sin(particles(3,i));
+                     5*particles(4,i)*(omega+v1)*tan(gamma+v2)/particles(5,i);
+                     0; 0]*dt;
+end
 
 if ~isnan(measurement(1)) & ~isnan(measurement(2))
-    % have a valid measurement
-    x = measurement(1);
-    y = measurement(2);
-    theta = theta + 1;
+    
+    m_particles = zeros(2,size(p_particles,2));
+    for i=1:size(p_particles,2)
+        m_particles(:,i) = [p_particles(1,i) + 0.5*p_particles(5,i)*cos(p_particles(3,i)), ...
+                            p_particles(2,i) + 0.5*p_particles(5,i)*sin(p_particles(3,i))];
+    end
+    probs = mvnpdf(m_particles', measurement, R);
+    alpha = 1/sum(probs);
+    probs = alpha*probs;
+    cumprobs = cumsum(probs);
+    f_particles = zeros(size(p_particles));
+    for i=1:size(p_particles,2)
+        X = rand;
+        idx = find(cumprobs >= X, 1);
+        f_particles(:,i) = p_particles(:,idx);
+    end
+else
+    f_particles = p_particles;
 end
 
-% we're unreliable about our favourite colour: 
-if strcmp(color, 'green')
-    color = 'red';
-else
-    color = 'green';
-end
 
 %% OUTPUTS %%
 % Update the internal state (will be passed as an argument to the function
 % at next run), must obviously be compatible with the format of
 % internalStateIn:
 
-internalStateOut.x = x;
-internalStateOut.y = y;
-internalStateOut.theta = theta;
-internalStateOut.color = color;
-
+internalStateOut.x = median(f_particles(1,:));
+internalStateOut.y = median(f_particles(2,:));
+internalStateOut.theta = median(f_particles(3,:));
+internalStateOut.particles = f_particles;
+x = internalStateOut.x;
+y = internalStateOut.y;
+theta = internalStateOut.theta;
 end

@@ -10,7 +10,8 @@
 %%
 % Provide the index of the experimental run you would like to use. Note
 % that using "0" means that you will load the measurement calibration data.
-
+close all;
+tic;
 experimentalRun = 1;
 fprintf(['Loading the data file #' num2str(experimentalRun) ' \n']);
 filename = ['data/run_' num2str(experimentalRun,'%03d') '.csv'];
@@ -79,7 +80,7 @@ if ~isnan(score)
     % our scalar score
     fprintf(['Average score: ' num2str(score) ' \n'])
 end
-
+toc;
 
 %%
 %==========================================================================

@@ -11,11 +11,21 @@ function internalState = estInitialize
 % note that there is *absolutely no prescribed format* for this internal state.
 % You can put in it whatever you like. Probably, you'll want to keep the position
 % and angle, and probably you'll remove the color.
+
+N = 500;
+particles = zeros(5,N);
+for i=1:N
+    particles(1,i) = unifrnd(-20,20);
+    particles(2,i) = unifrnd(-20,20);
+    particles(3,i) = unifrnd(-pi/2,pi/2);
+    particles(4,i) = unifrnd(0.425*0.95,0.425*1.05);
+    particles(5,i) = unifrnd(0.8*0.9,0.8*1.1);
+end
+
 internalState.x = 0;
 internalState.y = 0;
-internalState.theta = 0;
-internalState.color = 'green'; 
-
+internalState.theta = pi/4;
+internalState.particles = particles; 
 end
 
 
