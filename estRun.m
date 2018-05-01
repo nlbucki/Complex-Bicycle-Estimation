@@ -47,14 +47,25 @@ if ~isnan(measurement(1)) & ~isnan(measurement(2))
                             p_particles(2,i) + 0.5*p_particles(5,i)*sin(p_particles(3,i))];
     end
     probs = mvnpdf(m_particles', measurement, R);
-    alpha = 1/sum(probs);
-    probs = alpha*probs;
-    cumprobs = cumsum(probs);
-    f_particles = zeros(size(p_particles));
-    for i=1:size(p_particles,2)
-        X = rand;
-        idx = find(cumprobs >= X, 1);
-        f_particles(:,i) = p_particles(:,idx);
+    if sum(probs) < 1e-6
+        % We messed up and got infeasible values. Reset to measurment
+        % values.
+        disp('Reset')
+        for i=1:size(p_particles,2)
+            p_particles(1:2,i) = [measurement(1) - 0.5*p_particles(5,i)*cos(p_particles(3,i));
+                                  measurement(2) - 0.5*p_particles(5,i)*sin(p_particles(3,i))];
+        end
+        f_particles = p_particles;
+    else
+        alpha = 1/sum(probs);
+        probs = alpha*probs;
+        cumprobs = cumsum(probs);
+        f_particles = zeros(size(p_particles));
+        for i=1:size(p_particles,2)
+            X = rand;
+            idx = find(cumprobs >= X, 1);
+            f_particles(:,i) = p_particles(:,idx);
+        end
     end
 else
     f_particles = p_particles;
