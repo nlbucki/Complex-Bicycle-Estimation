@@ -18,9 +18,6 @@ function [x,y,theta,internalStateOut] = estRun(~, dt, internalStateIn, steeringA
 %  est_theta: your current best estimate for the bicycle's rotation theta
 %  internalState: the estimator's internal state, in a format that can be understood by the next call to this function
 
-% Example code only, you'll want to heavily modify this.
-% this needs to correspond to your init function:
-
 internalStateOut = internalStateIn;
 particles = internalStateIn.particles;
 omega = pedalSpeed;
@@ -32,11 +29,12 @@ p_particles = zeros(size(particles));
 for i=1:size(particles,2)
     v1 = normrnd(0,0.1);
     v2 = normrnd(0,0.1);
+    v3 = normrnd(0,0.05);
     p_particles(:,i) = particles(:,i) + ...
-                     [5*particles(4,i)*(omega+v1)*cos(particles(3,i));
-                     5*particles(4,i)*(omega+v1)*sin(particles(3,i));
-                     5*particles(4,i)*(omega+v1)*tan(gamma+v2)/particles(5,i);
-                     0; 0]*dt;
+                     [5*particles(4,i)*(omega)*cos(particles(3,i));
+                     5*particles(4,i)*(omega)*sin(particles(3,i));
+                     5*particles(4,i)*(omega)*tan(gamma)/particles(5,i);
+                     0; 0]*dt + [v1;v2;v3;0;0];
 end
 
 if ~isnan(measurement(1)) & ~isnan(measurement(2))
@@ -56,10 +54,23 @@ if ~isnan(measurement(1)) & ~isnan(measurement(2))
         idx = find(cumprobs >= X, 1);
         f_particles(:,i) = p_particles(:,idx);
     end
+%     Roughening (seems unnecessary)
+%     sigma = zeros(size(f_particles,1),1);
+%     K = 0.01;
+%     for i=1:size(f_particles,1)
+%        sigma(i) = K*abs(peak2peak(f_particles(i,:)))*size(f_particles,2)^(-1/size(f_particles,1));
+%     end
+%     delta = mvnrnd(zeros(5,1), diag(sigma), size(f_particles,2));
+%     f_particles = f_particles + delta';
 else
     f_particles = p_particles;
 end
 
+% figure(99);
+% plot(f_particles(1,:),f_particles(2,:), 'bx')
+% xlim([-50 50])
+% ylim([-50 50])
+% drawnow
 
 %% OUTPUTS %%
 % Update the internal state (will be passed as an argument to the function
