@@ -45,7 +45,7 @@ if ~isnan(measurement(1)) & ~isnan(measurement(2))
                             p_particles(2,i) + 0.5*p_particles(5,i)*sin(p_particles(3,i))];
     end
     probs = mvnpdf(m_particles', measurement, R);
-    if sum(probs) < 1e-6
+    if sum(probs) < 1e-9
         % We messed up and got infeasible values. Reset to measurment
         % values.
         disp('Reset')
@@ -54,6 +54,14 @@ if ~isnan(measurement(1)) & ~isnan(measurement(2))
                                   measurement(2) - 0.5*p_particles(5,i)*sin(p_particles(3,i))];
         end
         f_particles = p_particles;
+        %     Roughening (seems unnecessary)
+        sigma = zeros(size(f_particles,1),1);
+        K = 0.01;
+        for i=1:size(f_particles,1)
+           sigma(i) = K*abs(peak2peak(f_particles(i,:)))*size(f_particles,2)^(-1/size(f_particles,1));
+        end
+        delta = mvnrnd(zeros(5,1), diag(sigma), size(f_particles,2));
+        f_particles = f_particles + delta';
     else
         alpha = 1/sum(probs);
         probs = alpha*probs;
@@ -65,14 +73,6 @@ if ~isnan(measurement(1)) & ~isnan(measurement(2))
             f_particles(:,i) = p_particles(:,idx);
         end
     end
-%     Roughening (seems unnecessary)
-%     sigma = zeros(size(f_particles,1),1);
-%     K = 0.01;
-%     for i=1:size(f_particles,1)
-%        sigma(i) = K*abs(peak2peak(f_particles(i,:)))*size(f_particles,2)^(-1/size(f_particles,1));
-%     end
-%     delta = mvnrnd(zeros(5,1), diag(sigma), size(f_particles,2));
-%     f_particles = f_particles + delta';
 else
     f_particles = p_particles;
 end

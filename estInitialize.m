@@ -12,7 +12,7 @@ function internalState = estInitialize
 % You can put in it whatever you like. Probably, you'll want to keep the position
 % and angle, and probably you'll remove the color.
 
-N = 10;
+N = 500;
 particles = zeros(5,N);
 for i=1:N
     particles(1,i) = unifrnd(-20,20);
